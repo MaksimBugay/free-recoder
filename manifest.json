@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Webcam Recorder",
+  "version": "1.0",
+  "description": "A Chrome extension to record webcam and save data in fixed-size chunk files.",
+  "permissions": [
+    "activeTab",
+    "downloads",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "html/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["js/content.js"]
+    }
+  ],
+  "icons": {
+    "16": "images/webcam_icon_128.png",
+    "48": "images/webcam_icon_128.png",
+    "128": "images/webcam_icon_256.png"
+  }
+}
