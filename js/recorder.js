@@ -1,15 +1,22 @@
 const mimeType = 'video/webm; codecs="vp9"';
 const chunks = [];
 const chunkInterval = 5000;
-const pClient = {workSpaceId: "media-stream-test", accountId: "demo", deviceId: "web-page", applicationId: "recorder"};
+const wsUrl = 'wss://vasilii.prodpushca.com:30085/';
+let pingIntervalId = null;
+const pClient = {
+    workSpaceId: "media-stream-test",
+    accountId: "demo",
+    deviceId: "web-page18",
+    applicationId: "recorder"
+};
 const clientHashCode = calculateClientHashCode(
     pClient.workSpaceId,
     pClient.accountId,
     pClient.deviceId,
     pClient.applicationId
 );
-//const binaryId = uuid.v4();
-const binaryId = '972cb48f-7808-47cf-854a-a9b7ae0ce7c3';
+const binaryId = uuid.v4();
+//const binaryId = '972cb48f-7808-47cf-854a-a9b7ae0ce7c3';
 const binaryType = BinaryType.MEDIA_STREAM;
 const withAcknowledge = true;
 
@@ -39,6 +46,40 @@ try {
         console.log(`Browser supports ${mimeType} for MediaRecorder`);
     } else {
         throw new Error(`Browser does not support ${mimeType} for MediaRecorder`);
+    }
+
+    if (!PushcaClient.isOpen()) {
+        PushcaClient.openWsConnection(
+            wsUrl,
+            new ClientFilter(
+                pClient.workSpaceId,
+                pClient.accountId,
+                pClient.deviceId,
+                pClient.applicationId
+            ),
+            function () {
+                pingIntervalId = window.setInterval(function () {
+                    PushcaClient.sendPing();
+                }, 30000);
+            },
+            function (ws, event) {
+                window.clearInterval(pingIntervalId);
+                if (!event.wasClean) {
+                    console.error("Your connection died, refresh the page please");
+                }
+            },
+            function (ws, messageText) {
+                if (messageText !== "PONG") {
+                    console.log(messageText);
+                }
+            },
+            function (channelEvent) {
+                //console.log(channelEvent);
+            },
+            function (channelMessage) {
+                //console.log(channelMessage);
+            }
+        );
     }
 
     const startButton = document.getElementById("startBtn");
@@ -73,6 +114,8 @@ async function startRecording() {
                 console.log('Blob type:', blob.type);
 
                 chunks.push(blob);
+                //uploadChunk(chunks[0], chunks.length-1);
+                uploadChunk(blob, chunks.length - 1);
                 console.log(`${chunks.length} chunks were recorded`);
             }
         };
@@ -89,13 +132,86 @@ function stopRecording() {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
         }
-        delay(100).then(() => {
-            saveRecording();
+        delay(3000).then(() => {
+            //saveRecording();
             //playRecording();
+            playStream();
         })
         return {status: 0, message: 'recording stopped'};
     } catch (err) {
         return {status: -1, message: `Cannot stop, error accessing media devices: ${err}`};
+    }
+}
+
+function playStream() {
+    const video = document.getElementById('videoPlayer');
+    if (Hls.isSupported()) {
+        console.log("Hls is supported!");
+        const hls = new Hls({
+            manifestLoadingTimeOut: 4000, // Time before timing out the request (in milliseconds)
+            manifestLoadingMaxRetry: Infinity, // Number of times to retry loading the manifest
+            manifestLoadingRetryDelay: 1000, // Delay between retries (in milliseconds)
+            manifestLoadingMaxRetryTimeout: 64000 // Maximum retry timeout (in milliseconds)
+        });
+
+        // Listen for error events
+        hls.on(Hls.Events.ERROR, function (event, data) {
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        console.error('Network error:', data);
+                        hls.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        console.error('Media error:', data);
+                        hls.recoverMediaError();
+                        break;
+                    default:
+                        console.error('Error:', data);
+                        hls.destroy();
+                        break;
+                }
+            }
+        });
+
+        const sourceUrl = formatString(
+            'http://vasilii.prodpushca.com:8070/{0}/playlist.m3u8',
+            binaryId
+        );
+        console.log(`Hls source url = ${sourceUrl}`);
+        hls.loadSource(sourceUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+            console.log('Manifest details:', data);
+
+            // Optionally, print the raw manifest
+            fetch(sourceUrl)
+                .then(response => response.text())
+                .then(manifestText => {
+                    console.log('Manifest content:', manifestText);
+                    video.play();
+                })
+                .catch(error => {
+                    console.error('Error fetching manifest:', error);
+                    video.play();
+                });
+        });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        const sourceUrl = 'http://localhost:8080/playlist.m3u8';
+        video.src = sourceUrl;
+        video.addEventListener('canplay', function () {
+            video.play();
+        });
+
+        // Print the manifest details to the console for native HLS support
+        fetch(sourceUrl)
+            .then(response => response.text())
+            .then(manifestText => {
+                console.log('Manifest content:', manifestText);
+            })
+            .catch(error => {
+                console.error('Error fetching manifest:', error);
+            });
     }
 }
 
@@ -118,9 +234,31 @@ function playRecording() {
     videoPlayer.play();
 }
 
+function uploadChunk(chunkBlob, order) {
+    if (chunkBlob.size < 1) {
+        return;
+    }
+    convertBlobToArrayBuffer(chunkBlob).then((arrayBuffer) => {
+        let customHeader = buildPushcaBinaryHeader(
+            binaryType, clientHashCode, withAcknowledge, binaryId, order
+        );
+        const combinedBuffer = new ArrayBuffer(customHeader.length + arrayBuffer.byteLength);
+        const combinedView = new Uint8Array(combinedBuffer);
+        combinedView.set(customHeader, 0);
+        combinedView.set(new Uint8Array(arrayBuffer), customHeader.length);
+
+        if (PushcaClient.isOpen()) {
+            PushcaClient.ws.send(combinedBuffer);
+            console.log(`Segment ${order} was sent`);
+        }
+    }).catch((error) => {
+        console.error("Error converting Blob to Uint8Array:", error);
+    });
+}
+
 function saveRecording() {
     console.log(`Chunks number = ${chunks.length}`);
-    let blob = new Blob(chunks, {type: mimeType});
+    const blob = new Blob(chunks, {type: mimeType});
     convertBlobToArrayBuffer(blob).then((arrayBuffer) => {
         let customHeader = buildPushcaBinaryHeader(
             binaryType, clientHashCode, withAcknowledge, binaryId, 0
