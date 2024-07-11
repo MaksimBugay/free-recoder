@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Webcam Recorder</title>
+    <style>
+        body {
+            width: 800px;
+            padding: 10px;
+            left: 50px;
+            font-family: Arial, sans-serif;
+            font-size: x-large;
+        }
+
+        video {
+            width: 800px;
+            height: 450px;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        button {
+            width: 150px;
+            height: 80px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Webcam Recorder</h1>
+    <button id="startBtn">Start Recording</button>
+    <button id="stopBtn" disabled>Stop Recording</button>
+    <video id="videoPlayer" controls></video>
+    <script src="../js/common-utils.js"></script>
+    <script src="../js/recorder.js"></script>
+</body>
+</html>
