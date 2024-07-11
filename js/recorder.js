@@ -1,6 +1,32 @@
 const mimeType = 'video/webm; codecs="vp9"';
 const chunks = [];
 const chunkInterval = 5000;
+const pClient = {workSpaceId: "media-stream-test", accountId: "demo", deviceId: "web-page", applicationId: "recorder"};
+const clientHashCode = calculateClientHashCode(
+    pClient.workSpaceId,
+    pClient.accountId,
+    pClient.deviceId,
+    pClient.applicationId
+);
+//const binaryId = uuid.v4();
+const binaryId = '972cb48f-7808-47cf-854a-a9b7ae0ce7c3';
+const binaryType = BinaryType.MEDIA_STREAM;
+const withAcknowledge = true;
+
+console.log(`Binary id = ${binaryId.toString()}`);
+console.log(uuidToBytes(binaryId));
+console.log("Java: [-105, 44, -76, -113, 120, 8, 71, -49, -123, 74, -87, -73, -82, 12, -25, -61]")
+
+console.log(`Client hash code = ${clientHashCode}`);
+console.log(intToBytes(clientHashCode));
+if (clientHashCode !== -1752126113) {
+    console.error("Incorrect client hash code ");
+}
+console.log('Binary type');
+console.log(shortIntToBytes(binaryType));
+console.log('withAcknowledge');
+console.log(booleanToBytes(withAcknowledge));
+
 
 try {
     if (MediaSource.isTypeSupported(mimeType)) {
@@ -64,8 +90,8 @@ function stopRecording() {
             mediaRecorder.stop();
         }
         delay(100).then(() => {
-            //saveRecording();
-            playRecording();
+            saveRecording();
+            //playRecording();
         })
         return {status: 0, message: 'recording stopped'};
     } catch (err) {
@@ -95,13 +121,18 @@ function playRecording() {
 function saveRecording() {
     console.log(`Chunks number = ${chunks.length}`);
     let blob = new Blob(chunks, {type: mimeType});
-    convertBlobToUint8Array(blob).then((uint8Array) => {
-        let customHeader = new Uint8Array([]);
-        let combinedArray = new Uint8Array(customHeader.length + uint8Array.length);
-        combinedArray.set(customHeader);
-        combinedArray.set(uint8Array, customHeader.length);
+    convertBlobToArrayBuffer(blob).then((arrayBuffer) => {
+        let customHeader = buildPushcaBinaryHeader(
+            binaryType, clientHashCode, withAcknowledge, binaryId, 0
+        );
+        const combinedBuffer = new ArrayBuffer(customHeader.length + arrayBuffer.byteLength);
+        const combinedView = new Uint8Array(combinedBuffer);
+        combinedView.set(customHeader, 0);
+        combinedView.set(new Uint8Array(arrayBuffer), customHeader.length);
 
-        const combinedBlob = new Blob([combinedArray], {type: mimeType});
+        //ws.send(combinedBuffer);
+
+        const combinedBlob = new Blob([combinedView], {type: mimeType});
         const url = URL.createObjectURL(combinedBlob);
         const a = document.createElement('a');
         a.style.display = 'none';
