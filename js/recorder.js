@@ -17,7 +17,7 @@ try {
 
     const startButton = document.getElementById("startBtn");
     const stopButton = document.getElementById("stopBtn");
-    startButton.addEventListener('click', function (event){
+    startButton.addEventListener('click', function (event) {
         startRecording().then(result => {
             if (result.status === 0) {
                 startButton.disabled = true;
@@ -25,7 +25,7 @@ try {
             }
         });
     });
-    stopButton.addEventListener('click', function (event){
+    stopButton.addEventListener('click', function (event) {
         const result = stopRecording();
         if (result.status === 0) {
             startButton.disabled = false;
@@ -64,12 +64,32 @@ function stopRecording() {
             mediaRecorder.stop();
         }
         delay(100).then(() => {
-            saveRecording();
+            //saveRecording();
+            playRecording();
         })
         return {status: 0, message: 'recording stopped'};
     } catch (err) {
         return {status: -1, message: `Cannot stop, error accessing media devices: ${err}`};
     }
+}
+
+function playRecording() {
+    const combinedBlob = new Blob(chunks, {type: mimeType});
+    const videoPlayer = document.getElementById("videoPlayer");
+    const url = URL.createObjectURL(combinedBlob);
+    videoPlayer.src = url;
+
+    videoPlayer.addEventListener('ended', function () {
+        URL.revokeObjectURL(url);
+        console.log('Video ended');
+    });
+
+    videoPlayer.addEventListener('error', function () {
+        URL.revokeObjectURL(url);
+        console.error('An error occurred during video playback');
+    });
+
+    videoPlayer.play();
 }
 
 function saveRecording() {

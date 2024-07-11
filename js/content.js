@@ -123,58 +123,18 @@ function appendNextChunk() {
     }
 }
 
-function convertBlobToUint8Array(blob) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = function () {
-            const arrayBuffer = reader.result;
-            const uint8Array = new Uint8Array(arrayBuffer);
-            resolve(uint8Array);
-        };
-        reader.onerror = function (error) {
-            reject(error);
-        };
-        reader.readAsArrayBuffer(blob);
-    });
-}
-
-function saveRecording() {
-    console.log(`Chunks number = ${chunks.length}`);
-    let blob = new Blob(chunks, {type: mimeType});
-    convertBlobToUint8Array(blob).then((uint8Array) => {
-        let customHeader = new Uint8Array([]);
-        let combinedArray = new Uint8Array(customHeader.length + uint8Array.length);
-        combinedArray.set(customHeader);
-        combinedArray.set(uint8Array, customHeader.length);
-
-        const combinedBlob = new Blob([combinedArray], {type: mimeType});
-        const url = URL.createObjectURL(combinedBlob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = 'recorded_video_with_header.webm';
-        document.body.appendChild(a);
-        a.click();
-        URL.revokeObjectURL(url);
-    }).catch((error) => {
-        console.error("Error converting Blob to Uint8Array:", error);
-    });
-}
 
 function stopRecording() {
     try {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
         }
-        delay(100).then(() => {
-            saveRecording();
-        })
-        /*if (chunks.length > 0) {
+        if (chunks.length > 0) {
             const firstChunk = chunks.shift();
             console.log('First chunk blob type:', firstChunk.type);
             //playRecording();
             videoPlayer.src = URL.createObjectURL(firstChunk);
-        }*/
+        }
         return {status: 0, message: 'recording stopped'};
     } catch (err) {
         return {status: -1, message: `Cannot stop, error accessing media devices: ${err}`};
