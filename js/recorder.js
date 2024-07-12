@@ -114,9 +114,8 @@ async function startRecording() {
                 console.log('Blob type:', blob.type);
 
                 chunks.push(blob);
-                const combinedBlob = new Blob(chunks, {type: mimeType});
-                uploadChunk(combinedBlob, chunks.length-1);
-                //uploadChunk(blob, chunks.length - 1);
+                //uploadChunk(new Blob(chunks, {type: mimeType}), chunks.length-1);
+                uploadChunk(blob, chunks.length - 1);
                 console.log(`${chunks.length} chunks were recorded`);
             }
         };
@@ -133,7 +132,7 @@ function stopRecording() {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
         }
-        delay(3000).then(() => {
+        delay(5000).then(() => {
             //saveRecording();
             //playRecording();
             playStream();
