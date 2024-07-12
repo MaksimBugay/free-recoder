@@ -1,4 +1,4 @@
-const mimeType = 'video/webm; codecs="vp9"';
+const mimeType = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
 const chunks = [];
 const chunkInterval = 5000;
 const wsUrl = 'wss://vasilii.prodpushca.com:30085/';
@@ -6,7 +6,7 @@ let pingIntervalId = null;
 const pClient = {
     workSpaceId: "media-stream-test",
     accountId: "demo",
-    deviceId: "web-page18",
+    deviceId: "web-page",
     applicationId: "recorder"
 };
 const clientHashCode = calculateClientHashCode(
@@ -18,7 +18,7 @@ const clientHashCode = calculateClientHashCode(
 const binaryId = uuid.v4();
 //const binaryId = '972cb48f-7808-47cf-854a-a9b7ae0ce7c3';
 const binaryType = BinaryType.MEDIA_STREAM;
-const withAcknowledge = true;
+const withAcknowledge = false;
 
 console.log(`Binary id = ${binaryId.toString()}`);
 console.log(uuidToBytes(binaryId));
@@ -114,8 +114,9 @@ async function startRecording() {
                 console.log('Blob type:', blob.type);
 
                 chunks.push(blob);
-                //uploadChunk(chunks[0], chunks.length-1);
-                uploadChunk(blob, chunks.length - 1);
+                const combinedBlob = new Blob(chunks, {type: mimeType});
+                uploadChunk(combinedBlob, chunks.length-1);
+                //uploadChunk(blob, chunks.length - 1);
                 console.log(`${chunks.length} chunks were recorded`);
             }
         };
@@ -150,7 +151,7 @@ function playStream() {
         const hls = new Hls({
             manifestLoadingTimeOut: 4000, // Time before timing out the request (in milliseconds)
             manifestLoadingMaxRetry: Infinity, // Number of times to retry loading the manifest
-            manifestLoadingRetryDelay: 1000, // Delay between retries (in milliseconds)
+            manifestLoadingRetryDelay: 3000, // Delay between retries (in milliseconds)
             manifestLoadingMaxRetryTimeout: 64000 // Maximum retry timeout (in milliseconds)
         });
 
@@ -260,7 +261,7 @@ function saveRecording() {
     console.log(`Chunks number = ${chunks.length}`);
     const blob = new Blob(chunks, {type: mimeType});
     convertBlobToArrayBuffer(blob).then((arrayBuffer) => {
-        let customHeader = buildPushcaBinaryHeader(
+        const customHeader = buildPushcaBinaryHeader(
             binaryType, clientHashCode, withAcknowledge, binaryId, 0
         );
         const combinedBuffer = new ArrayBuffer(customHeader.length + arrayBuffer.byteLength);
