@@ -150,7 +150,7 @@ function playStream() {
         const hls = new Hls({
             manifestLoadingTimeOut: 4000, // Time before timing out the request (in milliseconds)
             manifestLoadingMaxRetry: Infinity, // Number of times to retry loading the manifest
-            manifestLoadingRetryDelay: 3000, // Delay between retries (in milliseconds)
+            manifestLoadingRetryDelay: 1000, // Delay between retries (in milliseconds)
             manifestLoadingMaxRetryTimeout: 64000 // Maximum retry timeout (in milliseconds)
         });
 
