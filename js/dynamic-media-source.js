@@ -9,11 +9,6 @@ let sourceBuffer;
 let queue = [];
 let savedTime = 0;
 
-video.src = URL.createObjectURL(mediaSource);
-document.getElementById('playButton').addEventListener('click', () => {
-    video.src = URL.createObjectURL(mediaSource);
-});
-
 function appendNextChunk() {
     if (!sourceBuffer) {
         return;
@@ -60,18 +55,15 @@ function initMediaSource() {
             savedTime = video.currentTime;
             if (segmentCounter > finishedSegmentCounter) {
                 const d = segmentDuration * (finishedSegmentCounter + 1);
-                const delta = 0.11
-                //const delta = 0.5
-                if (savedTime > (d - delta) && savedTime < (d + delta)) {
+                const delta = 0.15
+                if (savedTime > (d - delta) && (savedTime < d)) {
+                    //video.pause();
                     console.log(`${finishedSegmentCounter + 1} segment playing was done`);
                     finishedSegmentCounter += 1;
-                    sourceBuffer.timestampOffset += 5;
-                    video.pause();
-                    video.currentTime = savedTime + delta;
-                    video.play();
-                    /*if (segmentCounter > finishedSegmentCounter) {
-                        video.play();
-                    }*/
+                    sourceBuffer.timestampOffset = delta;
+                    video.currentTime = d;
+                    savedTime = video.currentTime;
+                    //video.play();
                 }
             }
         });
