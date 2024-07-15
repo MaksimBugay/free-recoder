@@ -489,8 +489,9 @@ PushcaClient.buildCommandMessage = function (command, args) {
 }
 
 PushcaClient.openWebSocket = function (onOpenHandler, onCloseHandler, onMessageHandler,
-                                       onChannelEventHandler, onChannelMessageHandler) {
+                                       onChannelEventHandler, onChannelMessageHandler, onDataHandler) {
     PushcaClient.ws = new window.WebSocket(PushcaClient.wsUrl);
+    PushcaClient.ws.binaryType = 'arraybuffer';
     if (PushcaClient.ws) {
         PushcaClient.ws.onopen = function () {
             //console.log('open');
@@ -500,11 +501,14 @@ PushcaClient.openWebSocket = function (onOpenHandler, onCloseHandler, onMessageH
         };
 
         PushcaClient.ws.onmessage = function (event) {
-            //console.log('message', event.data);
-            if (typeof event.data !== 'string') {
-                //TODO put binary processing here
+            if (event.data instanceof ArrayBuffer) {
+                //console.log('binary', event.data.byteLength);
+                if (typeof onDataHandler === 'function') {
+                    onDataHandler(event.data);
+                }
                 return;
             }
+            //console.log('message', event.data);
             let parts = event.data.split(MessagePartsDelimiter);
             if (parts[1] === MessageType.ACKNOWLEDGE) {
                 PushcaClient.releaseWaiterIfExists(parts[0], null);
@@ -572,7 +576,7 @@ PushcaClient.isOpen = function () {
     return PushcaClient.ws.readyState === window.WebSocket.OPEN;
 }
 PushcaClient.openWsConnection = function (baseUrl, clientObj, onOpenHandler, onCloseHandler, onMessageHandler,
-                                          onChannelEventHandler, onChannelMessageHandler, withoutRefresh) {
+                                          onChannelEventHandler, onChannelMessageHandler, onDataHandler, withoutRefresh) {
     PushcaClient.serverBaseUrl = baseUrl;
     PushcaClient.ClientObj = clientObj;
     const openConnectionRequest = new OpenConnectionRequest(clientObj, null, null);
@@ -587,7 +591,7 @@ PushcaClient.openWsConnection = function (baseUrl, clientObj, onOpenHandler, onC
                 PushcaClient.wsUrl = response.browserAdvertisedUrl;
                 console.log("Authorised web socket url: " + PushcaClient.wsUrl);
                 PushcaClient.openWebSocket(onOpenHandler, onCloseHandler, onMessageHandler,
-                    onChannelEventHandler, onChannelMessageHandler);
+                    onChannelEventHandler, onChannelMessageHandler, onDataHandler);
             } catch (error) {
                 console.error(`Cannot open ws connection based on response: ${event.data} `);
             }
@@ -614,7 +618,7 @@ PushcaClient.openWsConnection = function (baseUrl, clientObj, onOpenHandler, onC
                         }
                         delay(d).then(() => {
                             PushcaClient.openWsConnection(baseUrl, refreshClientObj(PushcaClient.ClientObj), onOpenHandler, onCloseHandler, onMessageHandler,
-                                onChannelEventHandler, onChannelMessageHandler, true);
+                                onChannelEventHandler, onChannelMessageHandler, onDataHandler, true);
                         });
                     }
                 }

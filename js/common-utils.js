@@ -104,3 +104,21 @@ function concatenateByteArrays(...arrays) {
 
     return concatenatedArray;
 }
+
+function shiftFirstNBytes(sourceBuffer, n) {
+    if (n >= sourceBuffer.byteLength) {
+        return new ArrayBuffer(0); // Return an empty buffer if n is larger than the source buffer size
+    }
+
+    // Step 1: Create a new ArrayBuffer for the remaining bytes.
+    const remainingBytesBuffer = new ArrayBuffer(sourceBuffer.byteLength - n);
+
+    // Step 2: Create a new Uint8Array view for both the source and destination buffers.
+    const sourceArray = new Uint8Array(sourceBuffer);
+    const remainingBytesArray = new Uint8Array(remainingBytesBuffer);
+
+    // Step 3: Copy the remaining bytes to the new buffer.
+    remainingBytesArray.set(sourceArray.subarray(n));
+
+    return remainingBytesBuffer;
+}

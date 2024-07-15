@@ -7,7 +7,7 @@ let pingIntervalId = null;
 const pClient = {
     workSpaceId: "media-stream-test",
     accountId: "demo",
-    deviceId: "web-page",
+    deviceId: "web-page-edge1",
     applicationId: "recorder"
 };
 const clientHashCode = calculateClientHashCode(
@@ -40,6 +40,8 @@ console.log(shortIntToBytes(binaryType));
 console.log('withAcknowledge');
 console.log(booleanToBytes(withAcknowledge));
 
+let playStreamInProgress = false;
+let savedSegmentCounter = 0;
 
 try {
     if (MediaSource.isTypeSupported(mimeType)) {
@@ -84,6 +86,17 @@ try {
             },
             function (channelMessage) {
                 //console.log(channelMessage);
+            },
+            function (binary) {
+                savedSegmentCounter += 1;
+                if (savedSegmentCounter === 1) {
+                    initMediaSource();
+                    delay(3000).then(() => {
+                        fetchAndQueueChunk(shiftFirstNBytes(binary, 26));
+                    })
+                } else {
+                    fetchAndQueueChunk(shiftFirstNBytes(binary, 26));
+                }
             }
         );
     }
@@ -115,9 +128,9 @@ async function startRecording() {
         mediaRecorder = new MediaRecorder(stream, {mimeType: mimeType});
 
         mediaRecorder.ondataavailable = event => {
-            if (event.data.size > 0) {
+            if (event.data.size > 0 && recording) {
                 const blob = event.data;
-                console.log('Blob type:', blob.type);
+                //console.log('Blob type:', blob.type);
 
                 chunks.push(blob);
                 uploadChunk(blob, chunks.length - 1);
@@ -154,12 +167,12 @@ function stopRecording() {
     recording = false;
     try {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            mediaRecorder.stop();
+            //mediaRecorder.stop();
         }
         delay(5000).then(() => {
             //saveRecording();
             //playRecording();
-            playStream();
+            //playStream();
         })
         return {status: 0, message: 'recording stopped'};
     } catch (err) {
@@ -168,6 +181,10 @@ function stopRecording() {
 }
 
 function playStream() {
+    if (playStreamInProgress) {
+        return;
+    }
+    playStreamInProgress = true;
     const video = document.getElementById('videoPlayer');
     if (Hls.isSupported()) {
         console.log("Hls is supported!");
@@ -217,12 +234,12 @@ function playStream() {
             video.play();
         });
         hls.on(Hls.Events.LEVEL_UPDATED, function (event, data) {
-            //console.log('Level updated, manifest:', data);
-            /*fetch(hls.url)
+            console.log('Level updated, manifest:', data);
+            fetch(hls.url)
                 .then(response => response.text())
                 .then(text => {
                     console.log('Updated manifest:\n', text);
-                });*/
+                });
         });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = sourceUrl;
@@ -276,7 +293,7 @@ function uploadChunk(chunkBlob, order) {
 
         if (PushcaClient.isOpen()) {
             PushcaClient.ws.send(combinedBuffer);
-            console.log(`Segment ${order} was sent`);
+            //console.log(`Segment ${order} was sent`);
         }
     }).catch((error) => {
         console.error("Error converting Blob to Uint8Array:", error);
@@ -309,4 +326,22 @@ function saveRecording() {
     }).catch((error) => {
         console.error("Error converting Blob to Uint8Array:", error);
     });
+}
+
+function saveSegmentToFile(arrayBuffer) {
+    try {
+        const blob = new Blob([arrayBuffer], {type: mimeType});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        savedSegmentCounter += 1;
+        a.download = `recorded_video_${savedSegmentCounter}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Error saving segment to file:', error);
+    }
 }
