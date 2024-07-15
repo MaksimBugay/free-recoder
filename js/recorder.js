@@ -1,4 +1,5 @@
 const mimeType = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
+let recording = false;
 const chunks = [];
 const chunkInterval = 5000;
 const wsUrl = 'wss://vasilii.prodpushca.com:30085/';
@@ -17,6 +18,11 @@ const clientHashCode = calculateClientHashCode(
 );
 const binaryId = uuid.v4();
 //const binaryId = '972cb48f-7808-47cf-854a-a9b7ae0ce7c3';
+const sourceUrl = formatString(
+    'http://vasilii.prodpushca.com:8070/{0}/playlist.m3u8',
+    binaryId
+);
+console.log(`Hls source url = ${sourceUrl}`);
 const binaryType = BinaryType.MEDIA_STREAM;
 const withAcknowledge = false;
 
@@ -114,20 +120,38 @@ async function startRecording() {
                 console.log('Blob type:', blob.type);
 
                 chunks.push(blob);
-                //uploadChunk(new Blob(chunks, {type: mimeType}), chunks.length-1);
                 uploadChunk(blob, chunks.length - 1);
                 console.log(`${chunks.length} chunks were recorded`);
             }
         };
 
-        mediaRecorder.start(chunkInterval);
+        mediaRecorder.onstop = () => {
+            if (recording) {
+                setTimeout(recordChunk, 50); // Slight delay before starting the next chunk
+            } else {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        };
+
+        recording = true;
+        recordChunk();
         return {status: 0, message: 'recording started'};
     } catch (err) {
         return {status: -1, message: `Cannot start, error accessing media devices: ${err}`};
     }
 }
 
+function recordChunk() {
+    if (!recording) return;
+
+    mediaRecorder.start();
+    delay(chunkInterval).then(() => {
+        mediaRecorder.stop();
+    });
+}
+
 function stopRecording() {
+    recording = false;
     try {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
@@ -149,8 +173,8 @@ function playStream() {
         console.log("Hls is supported!");
         const hls = new Hls({
             manifestLoadingTimeOut: 4000, // Time before timing out the request (in milliseconds)
-            manifestLoadingMaxRetry: Infinity, // Number of times to retry loading the manifest
-            manifestLoadingRetryDelay: 1000, // Delay between retries (in milliseconds)
+            //manifestLoadingMaxRetry: Infinity, // Number of times to retry loading the manifest
+            manifestLoadingRetryDelay: 50000, // Delay between retries (in milliseconds)
             manifestLoadingMaxRetryTimeout: 64000 // Maximum retry timeout (in milliseconds)
         });
 
@@ -174,11 +198,6 @@ function playStream() {
             }
         });
 
-        const sourceUrl = formatString(
-            'http://vasilii.prodpushca.com:8070/{0}/playlist.m3u8',
-            binaryId
-        );
-        console.log(`Hls source url = ${sourceUrl}`);
         hls.loadSource(sourceUrl);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
@@ -189,15 +208,23 @@ function playStream() {
                 .then(response => response.text())
                 .then(manifestText => {
                     console.log('Manifest content:', manifestText);
-                    video.play();
                 })
                 .catch(error => {
                     console.error('Error fetching manifest:', error);
-                    video.play();
                 });
         });
+        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+            video.play();
+        });
+        hls.on(Hls.Events.LEVEL_UPDATED, function (event, data) {
+            //console.log('Level updated, manifest:', data);
+            /*fetch(hls.url)
+                .then(response => response.text())
+                .then(text => {
+                    console.log('Updated manifest:\n', text);
+                });*/
+        });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        const sourceUrl = 'http://localhost:8080/playlist.m3u8';
         video.src = sourceUrl;
         video.addEventListener('canplay', function () {
             video.play();
@@ -275,7 +302,7 @@ function saveRecording() {
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = 'recorded_video_with_header.webm';
+        a.download = 'recorded_video.mp4';
         document.body.appendChild(a);
         a.click();
         URL.revokeObjectURL(url);
