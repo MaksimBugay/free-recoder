@@ -90,8 +90,8 @@ try {
             function (binary) {
                 savedSegmentCounter += 1;
                 if (savedSegmentCounter === 1) {
-                    initMediaSource();
                     delay(3000).then(() => {
+                        initMediaSource();
                         fetchAndQueueChunk(shiftFirstNBytes(binary, 26));
                     })
                 } else {
