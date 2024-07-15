@@ -140,7 +140,7 @@ async function startRecording() {
 
         mediaRecorder.onstop = () => {
             if (recording) {
-                setTimeout(recordChunk, 50); // Slight delay before starting the next chunk
+                recordChunk();
             } else {
                 stream.getTracks().forEach(track => track.stop());
             }

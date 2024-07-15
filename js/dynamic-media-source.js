@@ -55,7 +55,7 @@ function initMediaSource() {
             savedTime = video.currentTime;
             if (segmentCounter > finishedSegmentCounter) {
                 const d = segmentDuration * (finishedSegmentCounter + 1);
-                const delta = 0.12
+                const delta = 0.13
                 if ((savedTime > (d - delta)) && (savedTime < d)) {
                     //video.pause();
                     console.log(`${finishedSegmentCounter + 1} segment playing was done`);
