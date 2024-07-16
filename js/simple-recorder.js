@@ -28,7 +28,7 @@ if (!PushcaClient.isOpen()) {
         new ClientFilter(
             "media-stream-test",
             "player-demo",
-            "web-page-edge1",
+            "web-page-edge2",
             "recoder"
         ),
         function () {
@@ -102,7 +102,7 @@ function stopRecording() {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
         }
-        delay(1000).then(() => {
+        delay(5000).then(() => {
             /*saveRecording(1);
             saveRecording(2);
             saveRecording(3);*/
@@ -115,11 +115,11 @@ function stopRecording() {
 }
 
 function uploadLastChunk() {
-    if (chunks.length < 2) {
+    if (chunks.length < 1) {
         return;
     }
     const order = chunks.length - 1;
-    const chunkBlob = new Blob([chunks[0], chunks[order]], {type: mimeType});
+    const chunkBlob = (chunks.length === 1) ? new Blob([chunks[0]], {type: mimeType}) : new Blob([chunks[0], chunks[order]], {type: mimeType});
     convertBlobToArrayBuffer(chunkBlob).then((arrayBuffer) => {
         let customHeader = buildPushcaBinaryHeader(
             binaryType, clientHashCode, withAcknowledge, binaryId, order
