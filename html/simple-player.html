@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Webcam Recorder</title>
+    <style>
+        body {
+            width: 800px;
+            padding: 10px;
+            left: 50px;
+            font-family: Arial, sans-serif;
+            font-size: x-large;
+        }
+
+        video {
+            width: 800px;
+            height: 450px;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        button {
+            width: 150px;
+            height: 80px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Webcam Player</h1>
+    <video id="videoPlayer" controls></video>
+    <button id="playBtn">Play Recording</button>
+    <script src="../js/common-utils.js"></script>
+    <script src="../js/uuid.min.js"></script>
+    <script src="../js/callable-future.js"></script>
+    <script src="../js/pnotifications.js"></script>
+    <script src="../js/pushca-binary-helper.js"></script>
+    <script src="../js/dynamic-media-source.js"></script>
+    <script src="../js/simple-player.js"></script>
+</body>
+</html>

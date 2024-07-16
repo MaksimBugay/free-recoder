@@ -28,7 +28,7 @@ if (!PushcaClient.isOpen()) {
         new ClientFilter(
             "media-stream-test",
             "player-demo",
-            "web-page-edge",
+            "web-page-edge1",
             "recoder"
         ),
         function () {

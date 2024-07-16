@@ -51,22 +51,6 @@ function initMediaSource() {
                 });
             }
         );
-        video.addEventListener('timeupdate', () => {
-            savedTime = video.currentTime;
-            if (segmentCounter > finishedSegmentCounter) {
-                const d = segmentDuration * (finishedSegmentCounter + 1);
-                const delta = 0.13
-                if ((savedTime > (d - delta)) && (savedTime < d)) {
-                    //video.pause();
-                    console.log(`${finishedSegmentCounter + 1} segment playing was done`);
-                    finishedSegmentCounter += 1;
-                    sourceBuffer.timestampOffset = delta;
-                    video.currentTime = d;
-                    savedTime = video.currentTime;
-                    //video.play();
-                }
-            }
-        });
         video.play();
     } else {
         console.error('MSE or fMP4 format is not supported in your browser.');
