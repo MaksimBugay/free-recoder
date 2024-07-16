@@ -1,3 +1,5 @@
+const mimeType = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
+
 const wsUrl = 'wss://vasilii.prodpushca.com:30085/';
 let pingIntervalId = null;
 const pClient = {
@@ -41,21 +43,39 @@ if (!PushcaClient.isOpen()) {
             //console.log(channelMessage);
         },
         function (binary) {
-            chunks.push(shiftFirstNBytes(binary, 26));
+            const data = shiftFirstNBytes(binary, 26);
+            /*if (chunks.length === 0) {
+                delay(4000).then(() => {
+                    initMediaSource();
+                    delay(1000).then(() => {
+                        fetchAndQueueChunk(data);
+                    });
+                });
+            } else {
+                delay(1000).then(() => {
+                    fetchAndQueueChunk(data);
+                });
+            }*/
+            chunks.push(data);
+            saveChunk(data);
             console.log(`${chunks.length} chunk just arrived: ${binary.byteLength}`);
         }
     );
 }
 
-function playStream() {
-    initMediaSource();
-    for (let i = 0; i < chunks.length; i++) {
-        delay(1000 * (i + 1)).then(() => {
-            fetchAndQueueChunk(chunks[i]);
-        });
-    }
+function saveChunk(data) {
+        const chunkIndex = chunks.length;
+        const combinedBlob = new Blob([new Uint8Array(data)], {type: mimeType});
+        const url = URL.createObjectURL(combinedBlob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `recorded_video_${chunkIndex}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+
 }
 
 document.getElementById("playBtn").addEventListener('click', function (event) {
-    playStream();
 });
