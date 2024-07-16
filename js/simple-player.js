@@ -5,7 +5,7 @@ let pingIntervalId = null;
 const pClient = {
     workSpaceId: "media-stream-test",
     accountId: "player-demo",
-    deviceId: "web-page-edge",
+    deviceId: "web-page-edge1",
     applicationId: "player"
 };
 

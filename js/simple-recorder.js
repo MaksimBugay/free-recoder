@@ -5,7 +5,7 @@ let pingIntervalId = null;
 const pClient = {
     workSpaceId: "media-stream-test",
     accountId: "player-demo",
-    deviceId: "web-page-edge",
+    deviceId: "web-page-edge1",
     applicationId: "player"
 };
 const clientHashCode = calculateClientHashCode(
@@ -28,7 +28,7 @@ if (!PushcaClient.isOpen()) {
         new ClientFilter(
             "media-stream-test",
             "player-demo",
-            "web-page-edge2",
+            "web-page-edge",
             "recoder"
         ),
         function () {
@@ -115,11 +115,11 @@ function stopRecording() {
 }
 
 function uploadLastChunk() {
-    if (chunks.length < 1) {
+    if (chunks.length < 2) {
         return;
     }
     const order = chunks.length - 1;
-    const chunkBlob = (chunks.length === 1) ? new Blob([chunks[0]], {type: mimeType}) : new Blob([chunks[0], chunks[order]], {type: mimeType});
+    const chunkBlob = new Blob([chunks[0], chunks[order]], {type: mimeType});
     convertBlobToArrayBuffer(chunkBlob).then((arrayBuffer) => {
         let customHeader = buildPushcaBinaryHeader(
             binaryType, clientHashCode, withAcknowledge, binaryId, order
