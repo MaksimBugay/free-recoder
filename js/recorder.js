@@ -7,7 +7,7 @@ let pingIntervalId = null;
 const pClient = {
     workSpaceId: "media-stream-test",
     accountId: "demo",
-    deviceId: "web-page-edge",
+    deviceId: "web-page-chrome",
     applicationId: "recorder"
 };
 const clientHashCode = calculateClientHashCode(
