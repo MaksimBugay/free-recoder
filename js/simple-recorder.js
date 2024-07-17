@@ -125,6 +125,8 @@ async function stopRecording() {
         while (chunks.size > 0) {
             await delay(1000);
         }
+        firstChunk = null;
+        chunkCounter = 0;
         // Stop all media tracks to turn off the camera
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
