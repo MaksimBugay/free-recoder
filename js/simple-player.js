@@ -11,6 +11,7 @@ const pRecorderClient = new ClientFilter(
 );
 
 const video = document.getElementById('videoPlayer');
+let streamWasStopped = false;
 const mediaSource = new MediaSource();
 let sourceBuffer;
 let queue = [];
@@ -74,8 +75,11 @@ video.addEventListener('timeupdate', function () {
     if (buffered.length > 0) {
         const endOfBuffered = buffered.end(buffered.length - 1);
 
-        if (currentTime >= endOfBuffered - 1) {
+        if ((currentTime >= endOfBuffered - 1) && streamWasStopped) {
             console.log('All buffered data has been played.');
+            delay(3000).then(() => {
+                cleanMediaSourceBufferAndStopPlaying(video, mediaSource, queue);
+            });
         }
     }
 });
@@ -133,9 +137,7 @@ if (!PushcaClient.isOpen()) {
             }
             if (messageText === "ms_stop") {
                 console.log("Realtime Media stream was stopped");
-                delay(10000).then(() => {
-                    cleanMediaSourceBufferAndStopPlaying(video, mediaSource, queue);
-                });
+                streamWasStopped = true;
             }
         },
         function (channelEvent) {
