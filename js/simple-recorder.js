@@ -83,7 +83,7 @@ stopButton.addEventListener('click', function (event) {
             startButton.disabled = false;
             stopButton.disabled = true;
         }
-        location.replace(location.href);
+        //location.replace(location.href);
     });
 });
 
