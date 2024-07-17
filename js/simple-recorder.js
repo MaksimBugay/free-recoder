@@ -98,7 +98,7 @@ async function startRecording() {
                 chunkCounter += 1;
                 if (firstChunk) {
                     chunks.set(chunkCounter, blob);
-                    if (chunkCounter === 2) {
+                    if (chunkCounter === 3) {
                         uploadChunk(2);
                     }
                 } else {
