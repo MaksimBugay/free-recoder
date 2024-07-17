@@ -76,7 +76,6 @@ video.addEventListener('timeupdate', function () {
 
         if (currentTime >= endOfBuffered - 1) {
             console.log('All buffered data has been played.');
-            cleanMediaSourceBufferAndStopPlaying(video, mediaSource, queue);
         }
     }
 });
@@ -135,7 +134,7 @@ if (!PushcaClient.isOpen()) {
             if (messageText === "ms_stop") {
                 console.log("Realtime Media stream was stopped");
                 delay(10000).then(() => {
-                    //location.replace(location.href);
+                    cleanMediaSourceBufferAndStopPlaying(video, mediaSource, queue);
                 });
             }
         },
@@ -150,7 +149,7 @@ if (!PushcaClient.isOpen()) {
             const data = copyBytes(binary, 26, binary.byteLength);
             //chunks.push(data);
             fetchAndQueueChunk(data);
-            PushcaClient.broadcastMessage(uuid.v4(), pRecorderClient, false, `ms_get_next_chunk_${order + 1}`);
+            PushcaClient.broadcastMessage(uuid.v4(), pRecorderClient, true, `ms_get_next_chunk_${order + 1}`);
             console.log(`${order} chunk just arrived: ${binary.byteLength}`);
         }
     );

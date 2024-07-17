@@ -77,12 +77,12 @@ startButton.addEventListener('click', function (event) {
     });
 });
 stopButton.addEventListener('click', function (event) {
-    PushcaClient.broadcastMessage(uuid.v4(), pPlayerClient, false, "ms_stop");
     stopButton.disabled = true;
     stopRecording().then(result => {
         if (result.status === 0) {
             startButton.disabled = false;
-            location.replace(location.href);
+            PushcaClient.broadcastMessage(uuid.v4(), pPlayerClient, false, "ms_stop");
+            //location.replace(location.href);
         }
     });
 });
