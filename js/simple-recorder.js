@@ -121,9 +121,7 @@ async function stopRecording() {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
         }
-        while (chunks.size > 0) {
-            await delay(2000);
-        }
+        //chunks.clear();
         return {status: 0, message: 'recording stopped'};
     } catch (err) {
         return {status: -1, message: `Cannot stop, error accessing media devices: ${err}`};
@@ -148,7 +146,7 @@ function uploadChunk(order) {
         if (PushcaClient.isOpen()) {
             PushcaClient.ws.send(combinedBuffer);
             console.log(`Segment ${order-1} was sent`);
-            chunks.delete(order);
+            chunks.set(order, null);
         }
     }).catch((error) => {
         console.error("Error converting Blob to Uint8Array:", error);
