@@ -67,6 +67,44 @@ mediaSource.addEventListener('sourceopen', function () {
     }
 );
 
+video.addEventListener('timeupdate', function () {
+    const buffered = video.buffered;
+    const currentTime = video.currentTime;
+
+    if (buffered.length > 0) {
+        const endOfBuffered = buffered.end(buffered.length - 1);
+
+        if (currentTime >= endOfBuffered - 1) {
+            console.log('All buffered data has been played.');
+            cleanMediaSourceBufferAndStopPlaying(video, mediaSource, queue);
+        }
+    }
+});
+
+function cleanMediaSourceBufferAndStopPlaying(videoElement, mediaSource, queue) {
+    // Pause the video element
+    videoElement.pause();
+
+    // Remove all source buffers from the media source
+    const sourceBuffers = mediaSource.sourceBuffers;
+    while (sourceBuffers.length > 0) {
+        const buffer = sourceBuffers[0];
+        buffer.abort();  // Stop any ongoing operations
+        mediaSource.removeSourceBuffer(buffer);
+    }
+
+    if (queue) {
+        queue.length = 0;  // Clear the queue
+    }
+
+    URL.revokeObjectURL(videoElement.src);
+
+    // Set the video element source to empty to stop further playback
+    videoElement.removeAttribute('src');
+    videoElement.load();
+}
+
+
 if (!PushcaClient.isOpen()) {
     PushcaClient.openWsConnection(
         wsUrl,
