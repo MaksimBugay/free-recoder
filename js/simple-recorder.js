@@ -32,7 +32,7 @@ if (!PushcaClient.isOpen()) {
         new ClientFilter(
             "media-stream-test",
             "player-demo",
-            "web-page-edge",
+            uuid.v4().toString(),
             "recorder"
         ),
         function () {
@@ -73,7 +73,7 @@ startButton.addEventListener('click', function (event) {
         if (result.status === 0) {
             startButton.disabled = true;
             stopButton.disabled = false;
-            PushcaClient.broadcastMessage(uuid.v4(), pPlayerClient, false, "ms_start");
+            PushcaClient.broadcastMessage(uuid.v4(), pPlayerClient.cloneWithoutDeviceId(), false, "ms_start");
         }
     });
 });
@@ -82,7 +82,7 @@ stopButton.addEventListener('click', function (event) {
     stopRecording().then(result => {
         if (result.status === 0) {
             startButton.disabled = false;
-            PushcaClient.broadcastMessage(uuid.v4(), pPlayerClient, false, "ms_stop");
+            PushcaClient.broadcastMessage(uuid.v4(), pPlayerClient.cloneWithoutDeviceId(), false, "ms_stop");
             //location.replace(location.href);
         }
     });

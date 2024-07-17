@@ -115,7 +115,7 @@ if (!PushcaClient.isOpen()) {
         new ClientFilter(
             "media-stream-test",
             "player-demo",
-            "web-page-edge",
+            uuid.v4().toString(),
             "player"
         ),
         function () {
@@ -152,7 +152,7 @@ if (!PushcaClient.isOpen()) {
             const data = copyBytes(binary, 26, binary.byteLength);
             //chunks.push(data);
             fetchAndQueueChunk(data);
-            PushcaClient.broadcastMessage(uuid.v4(), pRecorderClient, true, `ms_get_next_chunk_${order + 1}`);
+            PushcaClient.broadcastMessage(uuid.v4(), pRecorderClient.cloneWithoutDeviceId(), true, `ms_get_next_chunk_${order + 1}`);
             console.log(`${order} chunk just arrived: ${binary.byteLength}`);
         }
     );
