@@ -18,6 +18,7 @@ const binaryId = uuid.v4();
 const binaryType = BinaryType.MEDIA_STREAM;
 const withAcknowledge = false;
 
+let stream;
 let mediaRecorder;
 
 let chunkCounter = 0;
@@ -89,7 +90,7 @@ stopButton.addEventListener('click', function (event) {
 
 async function startRecording() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+        stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
         mediaRecorder = new MediaRecorder(stream, {mimeType: mimeType});
 
         mediaRecorder.ondataavailable = event => {
@@ -123,6 +124,10 @@ async function stopRecording() {
         }
         while (chunks.size > 0) {
             await delay(1000);
+        }
+        // Stop all media tracks to turn off the camera
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
         }
         return {status: 0, message: 'recording stopped'};
     } catch (err) {
