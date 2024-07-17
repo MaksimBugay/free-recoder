@@ -10,16 +10,11 @@ const pRecorderClient = new ClientFilter(
     "recorder"
 );
 
-const chunks = [];
-
-const segmentDuration = 5;
 const video = document.getElementById('videoPlayer');
 const mediaSource = new MediaSource();
 let sourceBuffer;
 let queue = [];
 let segmentCounter = 0;
-let finishedSegmentCounter = 0;
-let savedTime = 0;
 
 function appendNextChunk() {
     if (queue.length > 0 && !sourceBuffer.updating) {
@@ -72,21 +67,6 @@ mediaSource.addEventListener('sourceopen', function () {
     }
 );
 
-/*video.addEventListener('timeupdate', () => {
-    savedTime = video.currentTime;
-    if (segmentCounter > finishedSegmentCounter) {
-        const d = segmentDuration * (finishedSegmentCounter + 1);
-        const delta = 0.2
-        if ((savedTime > (d - delta)) && (savedTime < d)) {
-            console.log(`${finishedSegmentCounter + 1} segment playing was done`);
-            finishedSegmentCounter += 1;
-            sourceBuffer.timestampOffset = delta;
-            video.currentTime = d;
-            savedTime = video.currentTime;
-        }
-    }
-});*/
-
 if (!PushcaClient.isOpen()) {
     PushcaClient.openWsConnection(
         wsUrl,
@@ -137,30 +117,3 @@ if (!PushcaClient.isOpen()) {
         }
     );
 }
-
-function saveChunk(data) {
-    const chunkIndex = chunks.length;
-    const combinedBlob = new Blob([new Uint8Array(data)], {type: mimeType});
-    const url = URL.createObjectURL(combinedBlob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = `recorded_video_${chunkIndex}.mp4`;
-    document.body.appendChild(a);
-    a.click();
-    URL.revokeObjectURL(url);
-
-}
-
-/*
-document.getElementById("playBtn").addEventListener('click', function (event) {
-    initMediaSource();
-    delay(1000).then(() => {
-        for (let i = 0; i < chunks.length; i++) {
-            fetchAndQueueChunk(chunks[i]);
-        }
-        delay(3000).then(() => {
-            video.play();
-        });
-    });
-});*/

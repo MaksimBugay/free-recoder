@@ -90,22 +90,20 @@
                 document.getElementById('fileInput2').addEventListener('change', processSelectedFile);
             }
         );
-        /*video.addEventListener('timeupdate', () => {
+        video.addEventListener('timeupdate', () => {
             savedTime = video.currentTime;
             if (segmentCounter > finishedSegmentCounter) {
                 const d = segmentDuration * (finishedSegmentCounter + 1);
-                if (savedTime > (d - 0.15) && savedTime < (d + 0.15)) {
+                const delta = 0.2
+                if ((savedTime > (d - delta)) && (savedTime < d)) {
                     console.log(`${finishedSegmentCounter + 1} segment playing was done`);
                     finishedSegmentCounter += 1;
-                    sourceBuffer.timestampOffset += 5;
-                    video.pause();
-                    video.currentTime = savedTime + 0.15;
-                    if (segmentCounter > finishedSegmentCounter) {
-                        video.play();
-                    }
+                    sourceBuffer.timestampOffset = delta;
+                    video.currentTime = d;
+                    savedTime = video.currentTime;
                 }
             }
-        });*/
+        });
     } else {
         console.error('MSE or fMP4 format is not supported in your browser.');
     }
