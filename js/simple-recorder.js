@@ -2,17 +2,17 @@ const mimeType = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
 
 const wsUrl = 'wss://vasilii.prodpushca.com:30085/';
 let pingIntervalId = null;
-const pClient = {
-    workSpaceId: "media-stream-test",
-    accountId: "player-demo",
-    deviceId: "web-page-edge1",
-    applicationId: "player"
-};
-const clientHashCode = calculateClientHashCode(
-    pClient.workSpaceId,
-    pClient.accountId,
-    pClient.deviceId,
-    pClient.applicationId
+const pPlayerClient = new ClientFilter(
+    "media-stream-test",
+    "player-demo",
+    "web-page-edge",
+    "player"
+);
+const playerClientHashCode = calculateClientHashCode(
+    pPlayerClient.workSpaceId,
+    pPlayerClient.accountId,
+    pPlayerClient.deviceId,
+    pPlayerClient.applicationId
 );
 const binaryId = uuid.v4();
 const binaryType = BinaryType.MEDIA_STREAM;
@@ -65,10 +65,12 @@ startButton.addEventListener('click', function (event) {
         if (result.status === 0) {
             startButton.disabled = true;
             stopButton.disabled = false;
+            PushcaClient.broadcastMessage(uuid.v4(), pPlayerClient, false, "ms_start");
         }
     });
 });
 stopButton.addEventListener('click', function (event) {
+    PushcaClient.broadcastMessage(uuid.v4(), pPlayerClient, false, "ms_stop");
     const result = stopRecording();
     if (result.status === 0) {
         startButton.disabled = false;
@@ -122,7 +124,7 @@ function uploadLastChunk() {
     const chunkBlob = new Blob([chunks[0], chunks[order]], {type: mimeType});
     convertBlobToArrayBuffer(chunkBlob).then((arrayBuffer) => {
         let customHeader = buildPushcaBinaryHeader(
-            binaryType, clientHashCode, withAcknowledge, binaryId, order
+            binaryType, playerClientHashCode, withAcknowledge, binaryId, order
         );
         const combinedBuffer = new ArrayBuffer(customHeader.length + arrayBuffer.byteLength);
         const combinedView = new Uint8Array(combinedBuffer);

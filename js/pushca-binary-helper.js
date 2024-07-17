@@ -18,3 +18,8 @@ function buildPushcaBinaryHeader(binaryType, destHashCode, withAcknowledge, bina
         intToBytes(order)
     );
 }
+
+function extractOrderFromBinaryWithHeader(sourceBuffer){
+    const orderBytes = copyBytes(sourceBuffer, 22, 26);
+    return bytesToInt(orderBytes);
+}

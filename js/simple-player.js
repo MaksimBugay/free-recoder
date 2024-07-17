@@ -2,12 +2,13 @@ const mimeType = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
 
 const wsUrl = 'wss://vasilii.prodpushca.com:30085/';
 let pingIntervalId = null;
-const pClient = {
-    workSpaceId: "media-stream-test",
-    accountId: "player-demo",
-    deviceId: "web-page-edge1",
-    applicationId: "player"
-};
+
+const pRecorderClient = new ClientFilter(
+    "media-stream-test",
+    "player-demo",
+    "web-page-edge",
+    "player"
+);
 
 const chunks = [];
 
@@ -40,8 +41,18 @@ function fetchAndQueueChunk(chunk) {
 }
 
 document.getElementById('playBtn').addEventListener('click', () => {
-    video.src = URL.createObjectURL(mediaSource);
+    activatePlayer();
 });
+
+function activatePlayer() {
+    if (!video.src) {
+        console.log("Player was activated");
+        video.src = URL.createObjectURL(mediaSource);
+    }
+}
+
+//document.addEventListener('mousemove', activatePlayer);
+//document.addEventListener('touchstart', activatePlayer);
 
 mediaSource.addEventListener('sourceopen', function () {
         sourceBuffer = mediaSource.addSourceBuffer(mimeType);
@@ -61,7 +72,7 @@ mediaSource.addEventListener('sourceopen', function () {
     }
 );
 
-video.addEventListener('timeupdate', () => {
+/*video.addEventListener('timeupdate', () => {
     savedTime = video.currentTime;
     if (segmentCounter > finishedSegmentCounter) {
         const d = segmentDuration * (finishedSegmentCounter + 1);
@@ -74,16 +85,16 @@ video.addEventListener('timeupdate', () => {
             savedTime = video.currentTime;
         }
     }
-});
+});*/
 
 if (!PushcaClient.isOpen()) {
     PushcaClient.openWsConnection(
         wsUrl,
         new ClientFilter(
-            pClient.workSpaceId,
-            pClient.accountId,
-            pClient.deviceId,
-            pClient.applicationId
+            "media-stream-test",
+            "player-demo",
+            "web-page-edge",
+            "player"
         ),
         function () {
             pingIntervalId = window.setInterval(function () {
@@ -100,6 +111,9 @@ if (!PushcaClient.isOpen()) {
             if (messageText !== "PONG") {
                 console.log(messageText);
             }
+            if (messageText === "ms_start") {
+                console.log("Realtime Media stream was started");
+            }
         },
         function (channelEvent) {
             //console.log(channelEvent);
@@ -108,10 +122,11 @@ if (!PushcaClient.isOpen()) {
             //console.log(channelMessage);
         },
         function (binary) {
+            const order = extractOrderFromBinaryWithHeader(binary);
             const data = shiftFirstNBytes(binary, 26);
             //chunks.push(data);
             fetchAndQueueChunk(data);
-            console.log(`New chunk just arrived: ${binary.byteLength}`);
+            console.log(`${order} chunk just arrived: ${binary.byteLength}`);
         }
     );
 }

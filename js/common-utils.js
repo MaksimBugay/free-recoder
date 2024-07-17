@@ -41,6 +41,14 @@ function intToBytes(int) {
     return Array.from(int8Array);
 }
 
+function bytesToInt(sourceBuffer) {
+    if (sourceBuffer.byteLength !== 4) {
+        throw new Error('Invalid byte array length. Must be 4 bytes.');
+    }
+    const view = new DataView(sourceBuffer);
+    return view.getInt32(0, false);
+}
+
 function shortIntToBytes(int) {
     if (int < 0 || int > 255) {
         throw new RangeError("Integer must be in the range 0 to 255.");
@@ -105,6 +113,14 @@ function concatenateByteArrays(...arrays) {
     return concatenatedArray;
 }
 
+function copyBytes(sourceBuffer, start, end) {
+    if (start < 0 || end > sourceBuffer.byteLength || start > end) {
+        throw new RangeError('Invalid start or end index.');
+    }
+
+    return sourceBuffer.slice(start, end);
+}
+
 function shiftFirstNBytes(sourceBuffer, n) {
     if (n >= sourceBuffer.byteLength) {
         return new ArrayBuffer(0); // Return an empty buffer if n is larger than the source buffer size
@@ -121,4 +137,12 @@ function shiftFirstNBytes(sourceBuffer, n) {
     remainingBytesArray.set(sourceArray.subarray(n));
 
     return remainingBytesBuffer;
+}
+
+function isNotEmpty(x) {
+    return (typeof x !== 'undefined') && x !== null && x !== undefined && x !== ''
+}
+
+function isEmpty(x) {
+    return !isNotEmpty(x);
 }
