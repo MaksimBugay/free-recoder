@@ -77,8 +77,8 @@ video.addEventListener('timeupdate', function () {
 
         if ((currentTime >= endOfBuffered - 1) && streamWasStopped) {
             console.log('All buffered data has been played.');
+            streamWasStopped = false;
             delay(3000).then(() => {
-                streamWasStopped = false;
                 cleanMediaSourceBufferAndStopPlaying(video, mediaSource, queue);
             });
         }
