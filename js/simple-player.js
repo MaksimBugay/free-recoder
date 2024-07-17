@@ -115,8 +115,9 @@ if (!PushcaClient.isOpen()) {
                 console.log("Realtime Media stream was started");
             }
             if (messageText === "ms_stop") {
+                console.log("Realtime Media stream was stopped");
                 delay(10000).then(() => {
-                    location.replace(location.href);
+                    //location.replace(location.href);
                 });
             }
         },

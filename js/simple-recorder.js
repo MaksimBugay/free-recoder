@@ -121,20 +121,20 @@ async function stopRecording() {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
         }
-        await delay(2000);
-        chunks.clear();
+        while (chunks.size > 0) {
+            await delay(2000);
+        }
         return {status: 0, message: 'recording stopped'};
     } catch (err) {
         return {status: -1, message: `Cannot stop, error accessing media devices: ${err}`};
     }
 }
 
-function uploadChunk(index) {
-    const blob = chunks.get(index);
+function uploadChunk(order) {
+    const blob = chunks.get(order);
     if (!blob) {
         return;
     }
-    const order = index - 1;
     const chunkBlob = new Blob([firstChunk, blob], {type: mimeType});
     convertBlobToArrayBuffer(chunkBlob).then((arrayBuffer) => {
         let customHeader = buildPushcaBinaryHeader(
@@ -147,8 +147,8 @@ function uploadChunk(index) {
 
         if (PushcaClient.isOpen()) {
             PushcaClient.ws.send(combinedBuffer);
-            console.log(`Segment ${order} was sent`);
-            chunks.delete(index);
+            console.log(`Segment ${order-1} was sent`);
+            chunks.delete(order);
         }
     }).catch((error) => {
         console.error("Error converting Blob to Uint8Array:", error);
