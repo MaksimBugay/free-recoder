@@ -78,12 +78,12 @@ startButton.addEventListener('click', function (event) {
 });
 stopButton.addEventListener('click', function (event) {
     PushcaClient.broadcastMessage(uuid.v4(), pPlayerClient, false, "ms_stop");
+    stopButton.disabled = true;
     stopRecording().then(result => {
         if (result.status === 0) {
             startButton.disabled = false;
-            stopButton.disabled = true;
+            location.replace(location.href);
         }
-        //location.replace(location.href);
     });
 });
 
@@ -121,7 +121,9 @@ async function stopRecording() {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
         }
-        //chunks.clear();
+        while (chunks.size > 0) {
+            await delay(1000);
+        }
         return {status: 0, message: 'recording stopped'};
     } catch (err) {
         return {status: -1, message: `Cannot stop, error accessing media devices: ${err}`};
@@ -145,8 +147,8 @@ function uploadChunk(order) {
 
         if (PushcaClient.isOpen()) {
             PushcaClient.ws.send(combinedBuffer);
-            console.log(`Segment ${order-1} was sent`);
-            chunks.set(order, null);
+            console.log(`Segment ${order - 1} was sent`);
+            chunks.delete(order);
         }
     }).catch((error) => {
         console.error("Error converting Blob to Uint8Array:", error);
