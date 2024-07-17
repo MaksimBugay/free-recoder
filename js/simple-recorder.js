@@ -2,18 +2,8 @@ const mimeType = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
 
 const wsUrl = 'wss://vasilii.prodpushca.com:30085/';
 let pingIntervalId = null;
-const pPlayerClient = new ClientFilter(
-    "media-stream-test",
-    "player-demo",
-    "web-page-edge",
-    "player"
-);
-const playerClientHashCode = calculateClientHashCode(
-    pPlayerClient.workSpaceId,
-    pPlayerClient.accountId,
-    pPlayerClient.deviceId,
-    pPlayerClient.applicationId
-);
+let pPlayerClient;
+let playerClientHashCode;
 const binaryId = uuid.v4();
 const binaryType = BinaryType.MEDIA_STREAM;
 const withAcknowledge = false;
@@ -53,6 +43,21 @@ if (!PushcaClient.isOpen()) {
             if (messageText.includes("ms_get_next_chunk_")) {
                 const order = extractNumber(messageText);
                 uploadChunk(order);
+            }
+            if (messageText.includes("ms_player_device_id_")) {
+                const playerDeviceId = messageText.replace("ms_player_device_id_", "");
+                pPlayerClient = new ClientFilter(
+                    "media-stream-test",
+                    "player-demo",
+                    playerDeviceId,
+                    "player"
+                );
+                playerClientHashCode = calculateClientHashCode(
+                    pPlayerClient.workSpaceId,
+                    pPlayerClient.accountId,
+                    pPlayerClient.deviceId,
+                    pPlayerClient.applicationId
+                );
             }
         },
         function (channelEvent) {

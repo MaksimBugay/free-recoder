@@ -3,6 +3,7 @@ const mimeType = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
 const wsUrl = 'wss://vasilii.prodpushca.com:30085/';
 let pingIntervalId = null;
 
+const playerDeviceId = uuid.v4().toString();
 const pRecorderClient = new ClientFilter(
     "media-stream-test",
     "player-demo",
@@ -38,6 +39,12 @@ function fetchAndQueueChunk(chunk) {
 
 document.getElementById('playBtn').addEventListener('click', () => {
     activatePlayer();
+    PushcaClient.broadcastMessage(
+        uuid.v4(),
+        pRecorderClient.cloneWithoutDeviceId(),
+        false,
+        `ms_player_device_id_${playerDeviceId}`
+    );
 });
 
 function activatePlayer() {
@@ -115,7 +122,7 @@ if (!PushcaClient.isOpen()) {
         new ClientFilter(
             "media-stream-test",
             "player-demo",
-            uuid.v4().toString(),
+            playerDeviceId,
             "player"
         ),
         function () {
