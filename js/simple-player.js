@@ -7,7 +7,7 @@ const pRecorderClient = new ClientFilter(
     "media-stream-test",
     "player-demo",
     "web-page-edge",
-    "player"
+    "recorder"
 );
 
 const chunks = [];
@@ -114,6 +114,11 @@ if (!PushcaClient.isOpen()) {
             if (messageText === "ms_start") {
                 console.log("Realtime Media stream was started");
             }
+            if (messageText === "ms_stop") {
+                delay(10000).then(() => {
+                    location.replace(location.href);
+                });
+            }
         },
         function (channelEvent) {
             //console.log(channelEvent);
@@ -126,6 +131,7 @@ if (!PushcaClient.isOpen()) {
             const data = copyBytes(binary, 26, binary.byteLength);
             //chunks.push(data);
             fetchAndQueueChunk(data);
+            PushcaClient.broadcastMessage(uuid.v4(), pRecorderClient, false, `ms_get_next_chunk_${order + 1}`);
             console.log(`${order} chunk just arrived: ${binary.byteLength}`);
         }
     );

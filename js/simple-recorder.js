@@ -19,7 +19,10 @@ const binaryType = BinaryType.MEDIA_STREAM;
 const withAcknowledge = false;
 
 let mediaRecorder;
-const chunks = [];
+
+let chunkCounter = 0;
+let firstChunk = null;
+const chunks = new Map();
 
 
 if (!PushcaClient.isOpen()) {
@@ -29,7 +32,7 @@ if (!PushcaClient.isOpen()) {
             "media-stream-test",
             "player-demo",
             "web-page-edge",
-            "recoder"
+            "recorder"
         ),
         function () {
             pingIntervalId = window.setInterval(function () {
@@ -45,6 +48,10 @@ if (!PushcaClient.isOpen()) {
         function (ws, messageText) {
             if (messageText !== "PONG") {
                 console.log(messageText);
+            }
+            if (messageText.includes("ms_get_next_chunk_")) {
+                const order = extractNumber(messageText);
+                uploadChunk(order);
             }
         },
         function (channelEvent) {
@@ -71,11 +78,13 @@ startButton.addEventListener('click', function (event) {
 });
 stopButton.addEventListener('click', function (event) {
     PushcaClient.broadcastMessage(uuid.v4(), pPlayerClient, false, "ms_stop");
-    const result = stopRecording();
-    if (result.status === 0) {
-        startButton.disabled = false;
-        stopButton.disabled = true;
-    }
+    stopRecording().then(result => {
+        if (result.status === 0) {
+            startButton.disabled = false;
+            stopButton.disabled = true;
+        }
+        location.replace(location.href);
+    });
 });
 
 async function startRecording() {
@@ -86,9 +95,17 @@ async function startRecording() {
         mediaRecorder.ondataavailable = event => {
             if (event.data.size > 0) {
                 const blob = event.data;
-                chunks.push(blob);
-                console.log(`${chunks.length} chunks were recorded`);
-                uploadLastChunk();
+                chunkCounter += 1;
+                if (firstChunk) {
+                    chunks.set(chunkCounter, blob);
+                    if (chunkCounter === 2) {
+                        uploadChunk(2);
+                    }
+                } else {
+                    firstChunk = blob;
+                }
+
+                console.log(`${chunkCounter} chunks were recorded`);
             }
         };
 
@@ -99,29 +116,26 @@ async function startRecording() {
     }
 }
 
-function stopRecording() {
+async function stopRecording() {
     try {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
         }
-        delay(5000).then(() => {
-            /*saveRecording(1);
-            saveRecording(2);
-            saveRecording(3);*/
-            chunks.splice(0, chunks.length);//clean memory
-        })
+        await delay(2000);
+        chunks.clear();
         return {status: 0, message: 'recording stopped'};
     } catch (err) {
         return {status: -1, message: `Cannot stop, error accessing media devices: ${err}`};
     }
 }
 
-function uploadLastChunk() {
-    if (chunks.length < 2) {
+function uploadChunk(index) {
+    const blob = chunks.get(index);
+    if (!blob) {
         return;
     }
-    const order = chunks.length - 1;
-    const chunkBlob = new Blob([chunks[0], chunks[order]], {type: mimeType});
+    const order = index - 1;
+    const chunkBlob = new Blob([firstChunk, blob], {type: mimeType});
     convertBlobToArrayBuffer(chunkBlob).then((arrayBuffer) => {
         let customHeader = buildPushcaBinaryHeader(
             binaryType, playerClientHashCode, withAcknowledge, binaryId, order
@@ -134,6 +148,7 @@ function uploadLastChunk() {
         if (PushcaClient.isOpen()) {
             PushcaClient.ws.send(combinedBuffer);
             console.log(`Segment ${order} was sent`);
+            chunks.delete(index);
         }
     }).catch((error) => {
         console.error("Error converting Blob to Uint8Array:", error);
@@ -141,8 +156,8 @@ function uploadLastChunk() {
 }
 
 function saveRecordedChunk(chunkIndex) {
-    console.log(`Chunks number = ${chunks.length}`);
-    const blob = new Blob([chunks[0], chunks[chunkIndex]], {type: mimeType});
+    console.log(`Chunks number = ${chunkCounter}`);
+    const blob = new Blob([firstChunk, chunks.get(chunkIndex)], {type: mimeType});
     convertBlobToArrayBuffer(blob).then((arrayBuffer) => {
         const customHeader = [];
         const combinedBuffer = new ArrayBuffer(customHeader.length + arrayBuffer.byteLength);
