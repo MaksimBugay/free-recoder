@@ -123,7 +123,7 @@ if (!PushcaClient.isOpen()) {
         },
         function (binary) {
             const order = extractOrderFromBinaryWithHeader(binary);
-            const data = shiftFirstNBytes(binary, 26);
+            const data = copyBytes(binary, 26, binary.byteLength);
             //chunks.push(data);
             fetchAndQueueChunk(data);
             console.log(`${order} chunk just arrived: ${binary.byteLength}`);
