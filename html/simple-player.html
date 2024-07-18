@@ -22,10 +22,40 @@
             width: 90%;
             height: 80px;
         }
+
+        .instructions-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 600px;
+            padding: 20px;
+            margin: 20px;
+        }
+        .instructions-container h2 {
+            color: #333333;
+            margin-top: 0;
+        }
+        .instructions-container p {
+            color: #666666;
+            line-height: 1.6;
+        }
+        .instructions-container p.step {
+            font-weight: bold;
+            color: #333333;
+        }
     </style>
 </head>
 <body>
-    <h1>Webcam Player</h1>
+    <div class="instructions-container">
+        <h2>Live Streaming with Pushca Demo</h2>
+        <p class="step">1. Open the <a href="https://vasilii.prodpushca.com:30443/simple-recorder.html" target="_blank">recorder page</a> on a remote machine.</p>
+        <p class="step">2. On the player page, click the "Play recording" button.</p>
+        <p class="step">3. On the recorder page, click the "Start recording" button.</p>
+        <p class="step">4. Begin your performance: talk, sing, or dance.</p>
+        <p class="step">5. The live stream will start on the player page with a delay of approximately 15-30 seconds.</p>
+        <p class="step">6. Once you are satisfied with the demo, click the "Stop recording" button on the recorder page.</p>
+    </div>
+
     <button id="playBtn">Play Recording</button>
     <video id="videoPlayer" controls></video>
     <script src="../js/common-utils.js"></script>

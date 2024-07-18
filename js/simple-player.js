@@ -17,6 +17,7 @@ const mediaSource = new MediaSource();
 let sourceBuffer;
 let queue = [];
 let segmentCounter = 0;
+let lastSegmentIndex;
 
 function appendNextChunk() {
     if (queue.length > 0 && !sourceBuffer.updating) {
@@ -63,6 +64,7 @@ mediaSource.addEventListener('sourceopen', function () {
 
         sourceBuffer.addEventListener('updateend', function () {
             segmentCounter += 1;
+            PushcaClient.broadcastMessage(uuid.v4(), pRecorderClient.cloneWithoutDeviceId(), true, `ms_get_next_chunk_${lastSegmentIndex + 1}`);
             appendNextChunk();
             if (video.paused) {
                 video.play();
@@ -155,12 +157,10 @@ if (!PushcaClient.isOpen()) {
             //console.log(channelMessage);
         },
         function (binary) {
-            const order = extractOrderFromBinaryWithHeader(binary);
+            lastSegmentIndex = extractOrderFromBinaryWithHeader(binary);
             const data = copyBytes(binary, 26, binary.byteLength);
-            //chunks.push(data);
             fetchAndQueueChunk(data);
-            PushcaClient.broadcastMessage(uuid.v4(), pRecorderClient.cloneWithoutDeviceId(), true, `ms_get_next_chunk_${order + 1}`);
-            console.log(`${order} chunk just arrived: ${binary.byteLength}`);
+            console.log(`${lastSegmentIndex} chunk just arrived: ${binary.byteLength}`);
         }
     );
 }
