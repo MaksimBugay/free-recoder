@@ -14,6 +14,7 @@ let mediaRecorder;
 let chunkCounter = 0;
 let firstChunk = null;
 const chunks = new Map();
+const sendChunkRequestHistory = [];
 
 
 if (!PushcaClient.isOpen()) {
@@ -42,7 +43,10 @@ if (!PushcaClient.isOpen()) {
             }
             if (messageText.includes("ms_get_next_chunk_")) {
                 const order = extractNumber(messageText);
-                uploadChunk(order);
+                if (!sendChunkRequestHistory.includes(order)) {
+                    sendChunkRequestHistory.push(order);
+                    uploadChunk(order);
+                }
             }
             if (messageText.includes("ms_player_device_id_")) {
                 const playerDeviceId = messageText.replace("ms_player_device_id_", "");
@@ -142,10 +146,14 @@ async function stopRecording() {
     }
 }
 
-function uploadChunk(order) {
-    const blob = chunks.get(order);
-    if (!blob) {
-        return;
+async function uploadChunk(order) {
+    let blob = chunks.get(order);
+    let i = 0;
+    while ((!blob) && (i < 10)) {
+        i += 1;
+        console.log(`Chunk ${order} is missing: ${JSON.stringify(chunks.keys())}`);
+        await delay(2000);
+        blob = chunks.get(order);
     }
     const chunkBlob = new Blob([firstChunk, blob], {type: mimeType});
     convertBlobToArrayBuffer(chunkBlob).then((arrayBuffer) => {
@@ -159,7 +167,7 @@ function uploadChunk(order) {
 
         if (PushcaClient.isOpen()) {
             PushcaClient.ws.send(combinedBuffer);
-            console.log(`Segment ${order - 1} was sent`);
+            console.log(`Segment ${order} was sent`);
             chunks.delete(order);
         }
     }).catch((error) => {
